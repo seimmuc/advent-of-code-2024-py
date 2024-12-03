@@ -55,7 +55,7 @@ def run_puzzle(day: int, part: Literal[1, 2], version: str = None, s_module: str
             if s_class is None:
                 s_class = f'Day{day}'
                 if version:
-                    s_class += f'V_{version}'
+                    s_class += f'V{version}'
             s_class = getattr(s_module, s_class)
         day_class: Type[Day] = s_class
         # noinspection PyArgumentList
@@ -73,13 +73,13 @@ def run_puzzle(day: int, part: Literal[1, 2], version: str = None, s_module: str
     with in_path.open(mode='rt', encoding='utf8', newline='\n') as f:
         puzzle_input = f.read()
     if time_iters is not None and time_iters > 0:
-        print(f'Benchmarking day {day} part {part}', '' if version is None else f' ({version})', sep='')
+        print(f'Benchmarking day {day} part {part}', '' if version is None else f' (ver {version})', sep='')
         t = timeit(stmt=lambda: solve_method(input_str=puzzle_input), number=time_iters)
         iter_ms = t * (1000 / time_iters)
         print(f'Ran {time_iters} iterations in {t:.3f}s')
         print(f'Iteration time: {iter_ms:.6f}ms')
     else:
-        print(f'Solving day {day} part {part}', '' if version is None else f' ({version})', sep='')
+        print(f'Solving day {day} part {part}', '' if version is None else f' (ver {version})', sep='')
         start_time = time.time()
         # noinspection PyArgumentList
         solution_output = solve_method(input_str=puzzle_input)
@@ -96,6 +96,7 @@ def run_puzzle(day: int, part: Literal[1, 2], version: str = None, s_module: str
 def run(args: list[str]):
     day = 1
     part: Literal[1, 2] = 1
+    ver: str | None = None
     example_input = False
     time_iters = None
     for arg in args:
@@ -108,6 +109,8 @@ def run(args: list[str]):
             if part not in (1, 2):
                 print(f'Error: part must equal 1 or 2 ({part})')
                 return
+        elif arg.startswith('ver'):
+            ver = arg[3:]
         elif arg == 'e' or arg == 'exampleinput':
             example_input = True
         elif arg.startswith('t'):
@@ -116,7 +119,7 @@ def run(args: list[str]):
             else:
                 time_iters = int(arg[1:])
     in_file = 'example_input.txt' if example_input else None
-    run_puzzle(day=day, part=part, input_file=in_file, time_iters=time_iters)
+    run_puzzle(day=day, part=part, version=ver, input_file=in_file, time_iters=time_iters)
 
 
 if __name__ == '__main__':
