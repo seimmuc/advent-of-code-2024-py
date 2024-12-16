@@ -195,3 +195,28 @@ class LGrid(Grid[GT]):
         for i, row in enumerate(self.lines):  # type: int, list[GT]
             row.insert(x, column[i])
         self._width += 1
+
+
+class GridSearch:
+    def __init__(self, search_char: str, replace_char: str, max_count: int | None = None):
+        self.search_char = search_char
+        self.replace_char = replace_char
+        self.max_count = max_count
+        self.results: list[Vector] = []
+
+    def search_line(self, line: str, y: int) -> str:
+        if self.search_char not in line:
+            return line
+        ci = line.find(self.search_char, 0)
+        while ci != -1:
+            if self.max_count is not None and len(self.results) + 1 > self.max_count:
+                raise RuntimeError(f'{self.__class__.__name__} found too many occurrences of {self.search_char}')
+            self.results.append(Vector(x=ci, y=y))
+            line = line[:ci] + self.replace_char + line[ci + 1:]
+            ci = line.find(self.search_char, ci + 1)
+        return line
+
+    def single_result(self) -> Vector:
+        if len(self.results) == 1:
+            return self.results[0]
+        raise RuntimeError(f'found an invalid number of "{self.search_char}" ({len(self.results)})')
