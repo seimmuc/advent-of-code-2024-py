@@ -24,46 +24,56 @@ class Day18(Day):
         return byte_positions, mem_space, sim_length
 
     @staticmethod
-    def find_path_length(mem_space: LGrid[str], shortest: bool) -> int | None:
+    def find_a_shortest_path(mem_space: LGrid[str]) -> list[Vector] | None:
         end = Vector(mem_space.width - 1, mem_space.height - 1)
         reached_locations: dict[Vector, int] = {}
-        steps: deque[tuple[Vector, int]] = deque(((Vector(0, 0), 0),))
+        steps: deque[tuple[Vector, list[Vector]]] = deque(((Vector(0, 0), []),))
+        result: list[Vector] | None = None
         while steps:
-            c_loc, c_sc = steps.popleft()
-            for nl, nv in mem_space.look_around(c_loc, DIRECTIONS_CARDINAL):
+            loc, path = steps.popleft()
+            for nl, nv in mem_space.look_around(loc, DIRECTIONS_CARDINAL):
                 if nv != '.':
                     continue
-                if nl in reached_locations and reached_locations[nl] <= c_sc + 1:
+                step_count = len(path) + 1
+                if nl in reached_locations and reached_locations[nl] <= step_count:
                     continue
-                reached_locations[nl] = c_sc + 1
+                reached_locations[nl] = step_count
+                path = path + [nl]
                 if nl != end:
-                    steps.append((nl, c_sc + 1))
-                elif not shortest:
-                    return c_sc + 1
-        if end not in reached_locations:
-            return None
-        return reached_locations[end]
+                    steps.append((nl, path))
+                elif result is None or len(result) > len(path):
+                    result = path
+        return result
+
+    @staticmethod
+    def is_valid_path(mem_space: LGrid[str], path: list[Vector]) -> bool:
+        for loc in path:
+            if mem_space.get_cell(loc) != '.':
+                return False
+        return True
 
     def solve_part1(self, input_str: str) -> str:
         byte_positions, mem_space, sim_length = self.parse_input(input_str)
         for i in range(sim_length):
             mem_space.set_cell(byte_positions[i], '#')
-        return str(self.find_path_length(mem_space=mem_space, shortest=True))
+        return str(len(Day18.find_a_shortest_path(mem_space)))
 
     def solve_part2(self, input_str: str) -> str:
         byte_positions, mem_space, sim_length = self.parse_input(input_str)
         for i in range(sim_length):
             mem_space.set_cell(byte_positions[i], '#')
         result = None
+        last_path = set(Day18.find_a_shortest_path(mem_space))
         for i in range(sim_length, len(byte_positions)):
-            if i % 100 == 0:
-                print(i)
             bp = byte_positions[i]
             mem_space.set_cell(bp, '#')
-            if Day18.find_path_length(mem_space, False) is None:
+            if bp not in last_path:
+                continue
+            lp = Day18.find_a_shortest_path(mem_space)
+            if lp is None:
                 result = f'{bp.x},{bp.y}'
-                print(f'result: {i} - {bp}')
                 break
+            last_path = set(lp)
         return result
 
 
